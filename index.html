@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Algorithm Visualizer</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- Our stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <header>
+    <h1>⚡ Algorithm Visualizer</h1>
+    <p>Sorting · Searching · Tree Traversal — bars physically move on every swap</p>
+  </header>
+
+  <!-- ── TAB NAVIGATION ── -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('sort')">Sorting</button>
+    <button class="tab"        onclick="switchTab('search')">Searching</button>
+    <button class="tab"        onclick="switchTab('tree')">Tree Traversal</button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SORTING PANEL
+  ════════════════════════════════════════ -->
+  <div id="panel-sort" class="panel active">
+
+    <div class="controls-grid">
+      <div class="control-box">
+        <label>Your Array (comma / space separated)</label>
+        <input type="text" id="sort-input" value="64, 34, 25, 12, 22, 11, 90, 45, 7, 38" />
+      </div>
+      <div class="control-box">
+        <label>Algorithm</label>
+        <select id="sort-algo">
+          <optgroup label="Comparison Sorts">
+            <option value="bubble">Bubble Sort</option>
+            <option value="selection">Selection Sort</option>
+            <option value="insertion">Insertion Sort</option>
+            <option value="merge">Merge Sort</option>
+            <option value="quick">Quick Sort</option>
+            <option value="heap">Heap Sort</option>
+            <option value="shell">Shell Sort</option>
+          </optgroup>
+          <optgroup label="Non-comparison Sorts">
+            <option value="counting">Counting Sort</option>
+            <option value="radix">Radix Sort</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div id="sort-algo-info" class="algo-info"></div>
+
+    <div class="speed-row">
+      <label>Speed</label>
+      <input type="range" id="sort-speed" min="1" max="10" value="5" />
+      <span class="speed-val" id="sort-speed-val">5</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary"   id="sort-run"  onclick="runSort()">▶ Visualize</button>
+      <button class="btn btn-secondary"                onclick="resetSort()">↺ Reset</button>
+      <button class="btn btn-danger"                   onclick="stopSort()">■ Stop</button>
+      <button class="btn btn-secondary"                onclick="randomArray()">⚄ Random</button>
+      <button class="btn btn-secondary"                onclick="togglePseudo('sort')">{ } Pseudocode</button>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="m-label">Comparisons</div><div class="m-val" id="m-comparisons">0</div></div>
+      <div class="metric"><div class="m-label">Swaps / Writes</div><div class="m-val" id="m-swaps">0</div></div>
+      <div class="metric"><div class="m-label">Array Size</div><div class="m-val" id="m-size">0</div></div>
+      <div class="metric"><div class="m-label">Time Complexity</div><div class="m-val" id="m-time">—</div></div>
+      <div class="metric"><div class="m-label">Space</div><div class="m-val" id="m-space">—</div></div>
+    </div>
+
+    <div class="status-bar" id="sort-status">
+      <span>Enter your array and click Visualize ▶</span>
+      <span class="step-count" id="sort-step-count"></span>
+    </div>
+
+    <!-- Colour legend -->
+    <div class="info-bar">
+      <div class="info-item"><div class="info-dot" style="background:var(--col-default)"></div><span>Default</span></div>
+      <div class="info-item"><div class="info-dot" style="background:var(--col-compare)"></div><span>Comparing</span></div>
+      <div class="info-item"><div class="info-dot" style="background:var(--col-swap)"></div><span>Swapping (moves!)</span></div>
+      <div class="info-item"><div class="info-dot" style="background:var(--col-pivot)"></div><span>Pivot</span></div>
+      <div class="info-item"><div class="info-dot" style="background:var(--col-sorted)"></div><span>Sorted</span></div>
+    </div>
+
+    <!-- Bar chart lives here -->
+    <div class="viz-area">
+      <div id="bar-container"></div>
+    </div>
+
+    <pre class="pseudocode" id="pseudo-sort"></pre>
+  </div><!-- /panel-sort -->
+
+
+  <!-- ════════════════════════════════════════
+       SEARCH PANEL
+  ════════════════════════════════════════ -->
+  <div id="panel-search" class="panel">
+
+    <div class="controls-grid">
+      <div class="control-box">
+        <label>Your Array</label>
+        <input type="text" id="search-input" value="3, 7, 11, 12, 22, 25, 34, 45, 64, 90" />
+      </div>
+      <div class="control-box">
+        <label>Algorithm</label>
+        <select id="search-algo" onchange="onSearchAlgoChange()">
+          <option value="linear">Linear Search</option>
+          <option value="binary">Binary Search (sorted array)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-target">
+      <label>Target Value:</label>
+      <input type="text" id="search-target" value="25" />
+    </div>
+
+    <div id="search-algo-info" class="algo-info"></div>
+
+    <div class="speed-row">
+      <label>Speed</label>
+      <input type="range" id="search-speed" min="1" max="10" value="5" />
+      <span class="speed-val" id="search-speed-val">5</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary"   onclick="runSearch()">▶ Search</button>
+      <button class="btn btn-secondary" onclick="resetSearch()">↺ Reset</button>
+      <button class="btn btn-secondary" onclick="togglePseudo('search')">{ } Pseudocode</button>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="m-label">Steps</div><div class="m-val" id="s-steps">0</div></div>
+      <div class="metric"><div class="m-label">Result</div><div class="m-val" id="s-result">—</div></div>
+      <div class="metric"><div class="m-label">Time Complexity</div><div class="m-val" id="s-time">—</div></div>
+    </div>
+
+    <div class="status-bar" id="search-status">
+      <span>Enter your array and target, then click Search ▶</span>
+    </div>
+
+    <div class="array-display" id="search-array-display"></div>
+
+    <!-- Binary search pointer readout -->
+    <div id="binary-pointers" style="display:none; margin-bottom:14px;">
+      <div style="display:flex; gap:14px; font-size:0.78rem; flex-wrap:wrap;">
+        <span>🔴 Left:  <strong id="bp-left"  style="color:var(--accent2)">—</strong></span>
+        <span>🟡 Mid:   <strong id="bp-mid"   style="color:var(--accent)">—</strong></span>
+        <span>🟢 Right: <strong id="bp-right" style="color:var(--accent3)">—</strong></span>
+      </div>
+    </div>
+
+    <pre class="pseudocode" id="pseudo-search"></pre>
+  </div><!-- /panel-search -->
+
+
+  <!-- ════════════════════════════════════════
+       TREE TRAVERSAL PANEL
+  ════════════════════════════════════════ -->
+  <div id="panel-tree" class="panel">
+
+    <div class="controls-grid">
+      <div class="control-box">
+        <label>Insert order into BST</label>
+        <input type="text" id="tree-input" value="50, 30, 70, 20, 40, 60, 80, 10, 25" />
+      </div>
+      <div class="control-box">
+        <label>Traversal</label>
+        <select id="tree-algo">
+          <option value="inorder">Inorder   (L → Root → R)</option>
+          <option value="preorder">Preorder  (Root → L → R)</option>
+          <option value="postorder">Postorder (L → R → Root)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="tree-algo-info" class="algo-info"></div>
+
+    <div class="speed-row">
+      <label>Speed</label>
+      <input type="range" id="tree-speed" min="1" max="10" value="5" />
+      <span class="speed-val" id="tree-speed-val">5</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary"   onclick="buildAndTraverse()">▶ Traverse</button>
+      <button class="btn btn-secondary" onclick="buildTree()">⬡ Build Only</button>
+      <button class="btn btn-danger"    onclick="stopTree()">■ Stop</button>
+      <button class="btn btn-secondary" onclick="togglePseudo('tree')">{ } Pseudocode</button>
+    </div>
+
+    <div class="status-bar" id="tree-status">
+      <span>Enter values and click Traverse ▶</span>
+    </div>
+
+    <div class="tree-area">
+      <svg id="tree-svg"></svg>
+    </div>
+
+    <div class="section-title" style="margin-top:16px;">Traversal Output</div>
+    <div class="traversal-output" id="traversal-output">
+      <span style="color:var(--text-dim); font-size:0.82rem;">Result appears here...</span>
+    </div>
+
+    <pre class="pseudocode" id="pseudo-tree"></pre>
+  </div><!-- /panel-tree -->
+
+</div><!-- /container -->
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ── JavaScript files (order matters!) ── -->
+<script src="js/utils.js"></script>
+<script src="js/bars.js"></script>
+<script src="js/sort.js"></script>
+<script src="js/search.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,716 @@
+/* ============================================================
+   style.css — Algorithm Visualizer
+   Sections:
+     1. CSS Variables (design tokens)
+     2. Reset & Base
+     3. Layout (header, container, tabs, panels)
+     4. Controls (inputs, selects, buttons, speed slider)
+     5. Metrics & Status bar
+     6. Bar Chart (the moving bars)
+     7. Search (array cells)
+     8. Tree (SVG nodes + edges)
+     9. Shared components (algo-info, pseudocode, toast)
+============================================================ */
+
+
+/* ── 1. CSS VARIABLES ── */
+:root {
+  /* Background layers */
+  --bg:       #0a0a0f;
+  --surface:  #12121a;
+  --surface2: #1a1a26;
+  --border:   #2a2a40;
+
+  /* Brand colours */
+  --accent:  #6c63ff;   /* purple  */
+  --accent2: #ff6b9d;   /* pink    */
+  --accent3: #63ffda;   /* teal    */
+  --accent4: #ffcc63;   /* yellow  */
+
+  /* Text */
+  --text:     #e8e8f0;
+  --text-dim: #7070a0;
+
+  /* Bar state colours */
+  --col-default: #6c63ff;
+  --col-compare: #ff6b9d;
+  --col-swap:    #ffcc63;
+  --col-sorted:  #63ffda;
+  --col-pivot:   #ff9f43;
+}
+
+
+/* ── 2. RESET & BASE ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient gradient background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(255,107,157,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ── 3. LAYOUT ── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+header {
+  padding: 24px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+header h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+}
+
+header p {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+/* Tab bar */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: var(--surface);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.tab {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.25s;
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.tab.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
+}
+
+.tab:hover:not(.active) {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* Panels */
+.panel {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.panel.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Two-column control grid */
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .controls-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.control-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.control-box label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+
+/* ── 4. CONTROLS ── */
+
+/* Text inputs + selects */
+input[type="text"],
+select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+select:focus {
+  border-color: var(--accent);
+}
+
+select option {
+  background: var(--surface2);
+}
+
+/* Button row */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 4px 16px rgba(108, 99, 255, 0.35);
+}
+
+.btn-primary:hover {
+  background: #7c74ff;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-danger {
+  background: rgba(255, 107, 157, 0.15);
+  color: var(--accent2);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Speed slider */
+.speed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.speed-row label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.speed-val {
+  font-size: 0.8rem;
+  color: var(--accent);
+  min-width: 30px;
+}
+
+
+/* ── 5. METRICS & STATUS BAR ── */
+.metrics {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.metric {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+}
+
+.metric .m-label {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.metric .m-val {
+  color: var(--accent3);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 2px;
+}
+
+.status-bar {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-bar .highlight {
+  color: var(--accent3);
+  font-weight: 600;
+}
+
+.status-bar .step-count {
+  color: var(--accent);
+  margin-left: auto;
+}
+
+/* Colour legend */
+.info-bar {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 0.78rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+
+/* ── 6. BAR CHART ── */
+
+/*
+  How physical movement works:
+  - Every .bar-item is position:absolute inside #bar-container
+  - Its `left` CSS property = its slot's x coordinate
+  - CSS `transition: left 0.25s` smoothly animates it sliding
+  - On a swap, we set left[i] = slotX(j) and left[j] = slotX(i)
+    → they visibly cross each other
+  - Then we swap heights/labels and snap back to home positions
+*/
+
+.viz-area {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 20px 0;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+#bar-container {
+  position: relative;
+  height: 300px;
+}
+
+.bar-item {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /* This transition is what makes bars physically slide */
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-rect {
+  width: 100%;
+  border-radius: 5px 5px 0 0;
+  background: var(--col-default);
+  box-shadow: 0 0 10px rgba(108, 99, 255, 0.2);
+  transition: background 0.1s, box-shadow 0.1s, height 0.18s ease;
+  min-height: 4px;
+}
+
+.bar-val {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 3px 0 6px;
+  white-space: nowrap;
+}
+
+/* Bar state colour classes */
+.bar-item.comparing .bar-rect {
+  background: var(--col-compare);
+  box-shadow: 0 0 16px rgba(255, 107, 157, 0.6);
+}
+
+.bar-item.swapping .bar-rect {
+  background: var(--col-swap);
+  box-shadow: 0 0 20px rgba(255, 204, 99, 0.75);
+}
+
+.bar-item.sorted .bar-rect {
+  background: var(--col-sorted);
+  box-shadow: 0 0 12px rgba(99, 255, 218, 0.4);
+}
+
+.bar-item.pivot .bar-rect {
+  background: var(--col-pivot);
+  box-shadow: 0 0 16px rgba(255, 159, 67, 0.65);
+}
+
+.bar-item.heap-act .bar-rect {
+  background: #a29bfe;
+  box-shadow: 0 0 14px rgba(162, 155, 254, 0.55);
+}
+
+.bar-item.shell-gap .bar-rect {
+  background: #fd79a8;
+  box-shadow: 0 0 12px rgba(253, 121, 168, 0.5);
+}
+
+.bar-item.counting .bar-rect {
+  background: #00cec9;
+  box-shadow: 0 0 12px rgba(0, 206, 201, 0.5);
+}
+
+
+/* ── 7. SEARCH (array cells) ── */
+.search-target {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.search-target label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.search-target input {
+  max-width: 120px;
+}
+
+.array-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 52px;
+  align-items: center;
+}
+
+.arr-cell {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  transition: all 0.3s;
+}
+
+.arr-cell .idx {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.arr-cell.searching {
+  border-color: var(--col-compare);
+  background: rgba(255, 107, 157, 0.12);
+  color: var(--col-compare);
+}
+
+.arr-cell.found {
+  border-color: var(--col-sorted);
+  background: rgba(99, 255, 218, 0.15);
+  color: var(--col-sorted);
+  box-shadow: 0 0 16px rgba(99, 255, 218, 0.4);
+}
+
+.arr-cell.boundary {
+  border-color: var(--accent4);
+  background: rgba(255, 204, 99, 0.1);
+}
+
+.arr-cell.mid {
+  border-color: var(--accent);
+  background: rgba(108, 99, 255, 0.15);
+  color: var(--accent);
+}
+
+
+/* ── 8. TREE (SVG) ── */
+.tree-area {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: auto;
+  min-height: 360px;
+}
+
+#tree-svg {
+  width: 100%;
+  min-height: 360px;
+}
+
+/* SVG node */
+.node circle {
+  fill: var(--accent);
+  stroke: rgba(108, 99, 255, 0.5);
+  stroke-width: 2;
+  transition: fill 0.35s, filter 0.35s;
+  filter: drop-shadow(0 0 6px rgba(108, 99, 255, 0.4));
+}
+
+.node.visiting circle {
+  fill: var(--accent4);
+  filter: drop-shadow(0 0 12px rgba(255, 204, 99, 0.8));
+}
+
+.node.current circle {
+  fill: var(--accent2);
+  filter: drop-shadow(0 0 14px rgba(255, 107, 157, 0.9));
+}
+
+.node.done circle {
+  fill: var(--accent3);
+  filter: drop-shadow(0 0 10px rgba(99, 255, 218, 0.6));
+}
+
+.node text {
+  fill: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.tree-edge {
+  stroke: var(--border);
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Traversal result strip */
+.traversal-output {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  margin-top: 14px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.traversal-output .tnode {
+  background: rgba(108, 99, 255, 0.2);
+  border: 1px solid rgba(108, 99, 255, 0.4);
+  color: var(--accent3);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-weight: 600;
+  animation: popIn 0.25s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+
+/* ── 9. SHARED COMPONENTS ── */
+
+/* Algo description box */
+.algo-info {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.algo-info strong {
+  color: var(--text);
+}
+
+/* Pseudocode block */
+.pseudocode {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 0.76rem;
+  line-height: 1.9;
+  color: var(--text-dim);
+  white-space: pre;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  display: none;        /* toggled by JS */
+}
+
+.pseudocode.show { display: block; }
+
+.pseudocode .kw { color: var(--accent2); }
+.pseudocode .fn { color: var(--accent3); }
+.pseudocode .hl {
+  background: rgba(108, 99, 255, 0.2);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.82rem;
+  color: var(--text);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
